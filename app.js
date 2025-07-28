@@ -368,22 +368,77 @@ class TravelItinerary {
         const cards = document.querySelectorAll('.location-card');
         
         cards.forEach((card, index) => {
-            card.addEventListener('click', (e) => {
+            let touchStartTime = 0;
+            let touchStartY = 0;
+            
+            // Handle both click and touch events for better mobile support
+            const handleCardInteraction = (e) => {
                 // Don't open modal if clicking on favorite button or map button
                 if (e.target.closest('.favorite-btn') || e.target.closest('.location-map-btn')) {
                     return;
                 }
                 this.openModal(card);
+            };
+            
+            // Add click event
+            card.addEventListener('click', (e) => {
+                console.log('Click event triggered on card:', card.querySelector('.location-name').textContent);
+                handleCardInteraction(e);
+            });
+            
+            // Add touch events for mobile devices
+            card.addEventListener('touchstart', (e) => {
+                touchStartTime = Date.now();
+                touchStartY = e.touches[0].clientY;
+            });
+            
+            card.addEventListener('touchend', (e) => {
+                const touchEndTime = Date.now();
+                const touchEndY = e.changedTouches[0].clientY;
+                const touchDuration = touchEndTime - touchStartTime;
+                const touchDistance = Math.abs(touchEndY - touchStartY);
+                
+                // Only trigger if it's a short tap (not a scroll)
+                if (touchDuration < 300 && touchDistance < 10) {
+                    e.preventDefault(); // Prevent default touch behavior
+                    console.log('Touch event triggered on card:', card.querySelector('.location-name').textContent);
+                    handleCardInteraction(e);
+                }
             });
         });
     }
 
     addGoogleMapsHandlers() {
         document.querySelectorAll('.location-map-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            let touchStartTime = 0;
+            let touchStartY = 0;
+            
+            const handleMapButtonInteraction = (e) => {
                 e.stopPropagation(); // Prevent modal from opening
                 const location = btn.getAttribute('data-location');
                 this.openGoogleMaps(location);
+            };
+            
+            // Add click event
+            btn.addEventListener('click', handleMapButtonInteraction);
+            
+            // Add touch events for mobile devices
+            btn.addEventListener('touchstart', (e) => {
+                touchStartTime = Date.now();
+                touchStartY = e.touches[0].clientY;
+            });
+            
+            btn.addEventListener('touchend', (e) => {
+                const touchEndTime = Date.now();
+                const touchEndY = e.changedTouches[0].clientY;
+                const touchDuration = touchEndTime - touchStartTime;
+                const touchDistance = Math.abs(touchEndY - touchStartY);
+                
+                // Only trigger if it's a short tap (not a scroll)
+                if (touchDuration < 300 && touchDistance < 10) {
+                    e.preventDefault(); // Prevent default touch behavior
+                    handleMapButtonInteraction(e);
+                }
             });
         });
     }

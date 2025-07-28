@@ -1480,11 +1480,29 @@ body {
 .location-card {
   cursor: pointer;
   transition: all 0.3s ease;
+  /* Improve touch interaction on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .location-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-xl);
+}
+
+/* Mobile-specific touch improvements */
+@media (max-width: 768px) {
+  .location-card {
+    /* Ensure cards are easily tappable on mobile */
+    min-height: 44px; /* Minimum touch target size */
+    -webkit-tap-highlight-color: rgba(255, 140, 66, 0.2);
+  }
+  
+  .location-card:active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 /* Google Maps Button Styles */
@@ -1503,6 +1521,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  /* Improve touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  min-height: 44px; /* Minimum touch target size */
 }
 
 .location-map-btn:hover {
@@ -1519,6 +1542,21 @@ body {
 .location-map-btn:focus-visible {
   outline: 2px solid var(--color-taiwan-orange);
   outline-offset: 2px;
+}
+
+/* Mobile-specific map button improvements */
+@media (max-width: 768px) {
+  .location-map-btn {
+    /* Ensure buttons are easily tappable on mobile */
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--font-size-base);
+    -webkit-tap-highlight-color: rgba(255, 140, 66, 0.3);
+  }
+  
+  .location-map-btn:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 /* Map Toast Styles */
