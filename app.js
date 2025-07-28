@@ -66,6 +66,12 @@ class TravelItinerary {
         
         // 更新頁面標題
         this.updatePageTitle(dayIndex);
+        
+        // Re-add event handlers after showing the day content
+        setTimeout(() => {
+            this.addLocationCardClickHandlers();
+            this.addGoogleMapsHandlers();
+        }, 100);
     }
 
     updateActiveButton(dayIndex) {
@@ -359,7 +365,9 @@ class TravelItinerary {
     }
 
     addLocationCardClickHandlers() {
-        document.querySelectorAll('.location-card').forEach(card => {
+        const cards = document.querySelectorAll('.location-card');
+        
+        cards.forEach((card, index) => {
             card.addEventListener('click', (e) => {
                 // Don't open modal if clicking on favorite button or map button
                 if (e.target.closest('.favorite-btn') || e.target.closest('.location-map-btn')) {
@@ -381,16 +389,61 @@ class TravelItinerary {
     }
 
     openGoogleMaps(location) {
-        // Create Google Maps URL with the location
-        const encodedLocation = encodeURIComponent(location + ' 台灣');
-        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+        // Get custom map URL if available, otherwise use default
+        const customUrl = this.getCustomMapUrl(location);
+        const mapUrl = customUrl || this.getDefaultMapUrl(location);
         
         // Open in new tab
-        window.open(googleMapsUrl, '_blank');
+        window.open(mapUrl, '_blank');
         
         // Show a toast notification
         this.showToast(`正在開啟 ${location} 的 Google 地圖...`);
     }
+
+    getDefaultMapUrl(location) {
+        // Default Google Maps URL with the location
+        const encodedLocation = encodeURIComponent(location + ' 台灣');
+        return `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+    }
+
+    getCustomMapUrl(location) {
+        // Custom map URLs for more accurate locations
+        // You can edit these URLs directly in the code
+        const customUrls = {
+            '桃園國際機場': 'https://www.google.com/maps/place/桃園國際機場/@25.0800,121.2320,15z',
+            '桃園高鐵站': 'https://maps.app.goo.gl/q8p6v7RHVEzBHhHe9',
+            '台中火車站附近住宿': 'https://maps.app.goo.gl/64sajYpZWjWfmnH68',
+            '審計新村368新創聚落': 'https://maps.app.goo.gl/29RmB3QhyiybaQSi7',
+            '高美濕地': 'https://www.google.com/maps/place/高美濕地/@24.3110,120.5490,15z',
+            '逢甲夜市': 'https://maps.app.goo.gl/FtHW8kgx59mnT4Yh6',
+            '彩虹眷村': 'https://maps.app.goo.gl/5qWuvXVEebzcRecE7',
+            '宮原眼科': 'https://maps.app.goo.gl/7KXkuZ9bsWXe38rK6',
+            '台中高鐵站': 'https://maps.app.goo.gl/hQdEYa4hFvbTEMqt6',
+            "台北airbnb住宿":'https://maps.app.goo.gl/64sajYpZWjWfmnH68',
+            '龍洞潛水': 'https://www.google.com/maps/place/龍洞灣海洋公園/@25.0970,121.9210,15z',
+            '龍洞浮潛': 'https://www.google.com/maps/place/龍洞灣海洋公園/@25.0970,121.9210,15z',
+            '九份老街': 'https://maps.app.goo.gl/sNoWjYqyu61dMDEi9',
+            '十分車站': 'https://maps.app.goo.gl/R88jPU4WyzaGLtm37',
+            '關渡碼頭貨櫃市集': 'https://maps.app.goo.gl/GLAX53GXVAuGrUaWA',
+            '饒河街觀光夜市': 'https://maps.app.goo.gl/UYwoUr7xEtgRZXQM7',
+            '華山1914文創園區': 'https://maps.app.goo.gl/q3fofPxfUxPjSEWy8',
+            '西門町': 'https://www.google.com/maps/place/西門町/@25.0420,121.5080,16z',
+            '寧夏夜市': 'https://maps.app.goo.gl/uKugKLnNLUschvMAA',
+            '小巨蛋Roller186溜輪場': 'https://maps.app.goo.gl/okKU2UVVnPysENVv9',
+            '信義區購物': 'https://maps.app.goo.gl/ErNX3G5GmQJHyN9M6',
+            '台北101': 'https://maps.app.goo.gl/kgUiFTBVSN3WNih88'
+        };
+        
+        // If no location specified, return all custom URLs
+        if (!location) {
+            return customUrls;
+        }
+        
+        // Return custom URL if available, otherwise return null
+        return customUrls[location] || null;
+    }
+
+
 
     showToast(message) {
         const toast = document.createElement('div');
@@ -414,14 +467,13 @@ class TravelItinerary {
 
     openModal(card) {
         const locationName = card.querySelector('.location-name').textContent;
-        const locationTime = card.querySelector('.location-time').textContent;
         const locationDuration = card.querySelector('.location-duration').textContent;
         const locationDescription = card.querySelector('.location-description').textContent;
         const locationImage = card.querySelector('.location-image img').src;
 
         // Populate modal content
         document.getElementById('modalTitle').textContent = locationName;
-        document.getElementById('modalTime').textContent = locationTime;
+        document.getElementById('modalTime').textContent = locationDuration; // Use duration as time
         document.getElementById('modalDuration').textContent = locationDuration;
         document.getElementById('modalDescription').textContent = locationDescription;
         document.getElementById('modalImage').src = locationImage;
@@ -434,6 +486,9 @@ class TravelItinerary {
         document.getElementById('modalTransport').textContent = details.transport;
         document.getElementById('modalTicket').textContent = details.ticket;
         document.getElementById('modalNotes').textContent = details.notes;
+        
+        // Add detailed description to the new section
+        document.getElementById('modalDetailedDescription').innerHTML = details.detailedDescription || '';
 
         // Show modal
         this.modal.classList.add('active');
@@ -446,7 +501,7 @@ class TravelItinerary {
     }
 
     getLocationDetails(locationName) {
-        // Detailed information for each location
+        // Detailed information for each location with comprehensive descriptions
         const details = {
             '桃園國際機場': {
                 stayTime: '30-60分鐘',
@@ -457,52 +512,57 @@ class TravelItinerary {
             },
             '桃園機場到台中高鐵': {
                 stayTime: '40分鐘',
-                bestTime: '全天',
+                bestTime: '23:21 - 23:59',
                 transport: '高鐵',
                 ticket: '約NT$ 700-900',
-                notes: '建議提前購買車票，可使用悠遊卡'
+                notes: '乘坐 23:21 班次（車號 0567）'
             },
             '台中住宿': {
-                stayTime: '住宿一晚',
+                stayTime: '住宿2晚',
                 bestTime: '晚上',
                 transport: '計程車、公車',
-                ticket: 'NT$ 1,500-3,000/晚',
-                notes: '建議選擇市中心飯店，交通便利'
+                ticket: '-',
+                notes: '13/8 16:00 - 15/8 11:00 \\ 入住人：Wong Tsz Suen \\ 14-15 早餐 \\ 訂單號 454163753721'
             },
             '審計新村368新創聚落': {
                 stayTime: '2-3小時',
-                bestTime: '下午2-6點',
-                transport: '公車、計程車',
+                bestTime: '開放時間：11:30-20:30',
+                transport: '台中市西區民生路368巷2弄12號',
                 ticket: '免費',
-                notes: '週末有暮暮市集，建議週末前往'
+                notes: '萬年不敗台中打卡景點，集結台中市集、美食還有滿滿文創小物',
+                detailedDescription: '<h4>歷史沿革</h4><p>1969年落成，原為臺灣省政府審計處職員宿舍，採英式花園城市概念配置前庭後院，雨污分流在當年堪稱前衛。1998年「精省」後荒廢；2015年市府「摘星青年、築夢台中」計畫導入60餘組創業團隊，活化為文創市集。</p><h4>建築特色</h4><p>二層黃牆、磨石子地與木窗保留1960年代眷舍風味；每日11:00-22:00市集與咖啡廳輪番營業。小蝸牛市集每週末開張。</p><h4>必拍景點</h4><p>鵝黃牆＋木窗老宅、巷底浮雕「Shenji 368」LOGO。</p>'
             },
             '高美濕地': {
                 stayTime: '2-3小時',
                 bestTime: '黃昏時分（5-7點）',
                 transport: '公車、計程車',
                 ticket: '免費',
-                notes: '注意潮汐時間，建議查詢日落時間'
+                notes: '注意潮汐時間，建議查詢日落時間',
+                detailedDescription: '<h4>歷史變遷</h4><p>前身為1932年開放的高美海水浴場；因臺中港北岸沙堤造成淤積，1976年閉園後轉為濕地。2004年公告為野生動物保護區，2014年修建691m木棧道，夕陽與風車構成「台版天空之鏡」。</p><h4>生態特色</h4><p>栖有瀕危雲林莞草與彈塗魚及冬季黑面琵鷺；進入核心區受限，需循棧道觀察生態。</p><h4>最佳時機</h4><p>夕陽最佳拍攝4-9月18:00-19:00；漲潮前1.5小時棧道關閉。</p>'
             },
             '逢甲夜市': {
                 stayTime: '2-3小時',
                 bestTime: '晚上6-11點',
                 transport: '公車、計程車',
                 ticket: '免費',
-                notes: '人潮眾多，注意隨身物品'
+                notes: '人潮眾多，注意隨身物品',
+                detailedDescription: '<h4>發展歷程</h4><p>1963年逢甲大學遷入後，文華路旁眷村攤販聚集成夜市。1980年代台中經濟起飛擴張至福星路，現有攤商2,200家；2010年獲觀光局評選「台灣最美味夜市」。2014年年人潮1,220萬、營業額101億台幣。</p><h4>特色亮點</h4><p>創意小吃：起司馬鈴薯、巨無霸臭豆腐等。管理特色：垃圾不落地與隔音牆美化。平日3萬、假日逾10萬人次。</p>'
             },
             '彩虹眷村': {
                 stayTime: '1-1.5小時',
                 bestTime: '上午9-11點或下午3-5點',
                 transport: '公車、計程車',
                 ticket: '免費',
-                notes: '拍照時注意不要觸摸彩繪牆面'
+                notes: '拍照時注意不要觸摸彩繪牆面',
+                detailedDescription: '<h4>藝術起源</h4><p>干城六村退伍榮民黃永阜自2008年起在牆面作畫，「彩虹爺爺」之名不脛而走。2010年學生發起「919搶救彩虹村」行動，市府以公園都市計畫保留；年遊客破百萬。2019年入選Lonely Planet《Secret Wonders of the World》。</p><h4>現況</h4><p>2024年黃永阜辭世，市府設紀念專區，園區續由志工與藝術家共創，維護街角童趣彩繪。</p>'
             },
             '宮原眼科': {
                 stayTime: '1-2小時',
                 bestTime: '上午10-12點或下午2-4點',
                 transport: '公車、計程車',
                 ticket: '免費參觀，冰淇淋需付費',
-                notes: '冰淇淋很受歡迎，可能需要排隊'
+                notes: '冰淇淋很受歡迎，可能需要排隊',
+                detailedDescription: '<h4>歷史建築</h4><p>紅磚騎樓建於1920年代；日本眼科博士宮原武熊1927年開設診所，日治時期台中最大眼科。融合羅馬拱廊與日式木構，戰後歷經衛生院、商號與921地震損毀；2012年日出集團修復為書牆式冰淇淋名店。</p><h4>建築特色</h4><p>保留拱窗與挑高天井，Low-E玻璃屋頂引自然光，哈利波特式書櫃為打卡熱點。必拍：挑高天井、二十字交趾陶店牌。</p>'
             },
             '前往台北': {
                 stayTime: '40分鐘',
@@ -511,89 +571,108 @@ class TravelItinerary {
                 ticket: '約NT$ 700-900',
                 notes: '建議提前購買車票'
             },
+            '台北airbnb': {
+                stayTime: '住宿一晚',
+                bestTime: '晚上',
+                transport: '捷運、公車、計程車',
+                ticket: 'NT$ 2,000-4,000/晚',
+                notes: '建議選擇捷運站附近住宿，交通便利'
+            },
             '龍洞潛水': {
                 stayTime: '2-3小時',
                 bestTime: '上午9-11點',
                 transport: '包車、計程車',
                 ticket: 'NT$ 1,500-2,500/人',
-                notes: '需要預約，建議有潛水經驗'
+                notes: '需要預約，建議有潛水經驗',
+                detailedDescription: '<h4>地理特色</h4><p>龍洞灣為3500萬年前沉積岩海蝕灣；清代稱「撈洞」。天然海灣阻流、能見度15-25m，1995年交通部成立風景區管理處，規劃台灣最早合法開放水域。</p><h4>活動項目</h4><p>提供浮潛、AIDA自由潛與岩壁攀登；攀岩場自1978年開發，九大區逾600條路線，YDS5.4-5.14a。夏季需預約教練並留意東北季風浪況，避開東北季風10-3月。</p>'
             },
             '龍洞浮潛': {
                 stayTime: '2-3小時',
                 bestTime: '上午10-12點或下午2-4點',
                 transport: '包車、計程車',
                 ticket: 'NT$ 800-1,200/人',
-                notes: '適合初學者，提供裝備租借'
+                notes: '適合初學者，提供裝備租借',
+                detailedDescription: '<h4>地理特色</h4><p>龍洞灣為3500萬年前沉積岩海蝕灣；清代稱「撈洞」。天然海灣阻流、能見度15-25m，1995年交通部成立風景區管理處，規劃台灣最早合法開放水域。</p><h4>活動項目</h4><p>提供浮潛、AIDA自由潛與岩壁攀登；攀岩場自1978年開發，九大區逾600條路線，YDS5.4-5.14a。夏季需預約教練並留意東北季風浪況，避開東北季風10-3月。</p>'
             },
             '九份老街': {
                 stayTime: '3-4小時',
                 bestTime: '下午3-7點',
                 transport: '公車、計程車',
                 ticket: '免費',
-                notes: '夜晚燈籠點亮時最美，建議傍晚前往'
+                notes: '夜晚燈籠點亮時最美，建議傍晚前往',
+                detailedDescription: '<h4>黃金歲月</h4><p>清光緒19年（1893）發現砂金，日治時期成「亞洲金都」，人口一度破10萬。1971年礦坑封閉後蕭條；1989年《悲情城市》取景帶動觀光復甦。</p><h4>景觀特色</h4><p>基山街、豎崎路石階與茶樓燈籠夜景成經典；夜色紅燈籠與山海景致最受攝影師青睞。建議平日傍晚前上山避開車潮，假日15:00前入山較順行。</p>'
             },
             '十分車站': {
                 stayTime: '2-3小時',
                 bestTime: '上午10-12點或下午2-4點',
                 transport: '平溪線火車',
                 ticket: '火車票NT$ 50-100，天燈NT$ 150-200',
-                notes: '放天燈時注意安全，遵守規定'
+                notes: '放天燈時注意安全，遵守規定',
+                detailedDescription: '<h4>歷史背景</h4><p>平溪線1929年為運煤支線，木造十分站保存日式月台。天燈源自清道光年間「報平安火筒」；元宵節與觀光團體全年可施放，店家提供四色／八色書寫祈願。</p><h4>天燈文化</h4><p>年度高潮為元宵「平溪天燈節」，CNN評為全球必訪節慶。平時06-22時可施放，雨天改水燈更環保。環保提醒：竹架紙燈須至回收站換禮物。</p>'
             },
             '關渡碼頭貨櫃市集': {
                 stayTime: '2-3小時',
                 bestTime: '下午3-7點',
                 transport: '捷運關渡站、公車',
                 ticket: '免費',
-                notes: '新開幕景點，河岸景色優美，適合看夕陽'
+                notes: '新開幕景點，河岸景色優美，適合看夕陽',
+                detailedDescription: '<h4>活化專案</h4><p>北投關渡棧橋活化專案，2024-05-21開幕14座美食貨櫃，引進地下化水電設施。轉型14櫃異國美食＋河畔舞台。</p><h4>景觀特色</h4><p>夕陽對望關渡大橋，可串聯自行車道與客船往返大稻埕；夕陽對望觀音山與大橋；週末有駐唱、泡泡秀。可租單車串連關渡自然公園。</p>'
             },
             '饒河街觀光夜市': {
                 stayTime: '1.5-2小時',
                 bestTime: '晚上6-10點',
                 transport: '捷運松山站、公車',
                 ticket: '免費',
-                notes: '有多家米其林推薦美食，建議空腹前往'
+                notes: '有多家米其林推薦美食，建議空腹前往',
+                detailedDescription: '<h4>歷史背景</h4><p>原為錫口河港商路；1987年社區與市府合作成立全長600m夜市，作為松山經濟活化方案。松山錫口河港老街，1987年居民與市府合作成觀光夜市。</p><h4>特色美食</h4><p>牌樓貓頭鷹雕像為地標，胡椒餅、藥燉排骨列米其林必比登推薦；招牌胡椒餅、藥燉排骨列米其林必比登；入口貓頭鷹銅像乃吉祥物。</p>'
             },
             '華山1914文創園區': {
                 stayTime: '2-3小時',
                 bestTime: '上午10-12點或下午2-5點',
                 transport: '捷運忠孝新生站、公車',
                 ticket: '免費參觀，展覽需付費',
-                notes: '經常舉辦展覽，建議查詢最新活動'
+                notes: '經常舉辦展覽，建議查詢最新活動',
+                detailedDescription: '<h4>歷史變遷</h4><p>1914年日人創辦「芳釀社」清酒廠；1930年增建樟腦精製廠。1987年酒廠遷林口後閒置；1999年劇團搶救舊倉庫，2005年正式定位為台灣首座文創園區。</p><h4>文創發展</h4><p>1999年藝術家佔領掀起「華山運動」，2007年BOT由台灣文創公司營運，迄今辦展近3萬場。紅磚倉庫、酒槽鋼架與高塔成熱門展演場與週末手作市集；紅磚六合院、酒槽鋼架成IG打卡點。</p>'
             },
             '西門町': {
                 stayTime: '2-3小時',
                 bestTime: '下午2-8點',
                 transport: '捷運西門站',
                 ticket: '免費',
-                notes: '年輕人聚集地，潮流時尚購物區'
+                notes: '年輕人聚集地，潮流時尚購物區',
+                detailedDescription: '<h4>發展歷程</h4><p>1896年興建「東京亭」戲院，1922年正式命名西門町。1920年代成台北電影街，全盛37家戲院。1960-80年代電影街、八角樓紅樓推動流行文化；捷運板南線1999年通車帶動再生。</p><h4>現代風貌</h4><p>今日徒步區為青少年亞文化中心，集合動漫周邊、潮牌與街頭表演。推薦路線：紅樓 → 電影主題公園 → 武昌街手繪看板。</p>'
             },
             '寧夏夜市': {
                 stayTime: '1.5-2小時',
                 bestTime: '晚上6-10點',
                 transport: '捷運雙連站、公車',
                 ticket: '免費',
-                notes: '曾獲選台北最好逛夜市，必吃蚵仔煎'
+                notes: '曾獲選台北最好逛夜市，必吃蚵仔煎',
+                detailedDescription: '<h4>歷史淵源</h4><p>源於1908年圓環攤販；圓環火災後寧夏路逆勢崛起。源自1908年建成圓環攤販，戰後擴展寧夏路。</p><h4>管理特色</h4><p>全長300m、180攤，首創「千歲宴」與行動支付；2020-24連獲經濟部五星市集。2014起推「環保夜市」地下油脂截流器，連續五年獲經濟部五星市集。</p>'
             },
             '小巨蛋Roller186溜輪場': {
                 stayTime: '2-3小時',
                 bestTime: '上午10-12點或下午2-5點',
                 transport: '捷運小巨蛋站',
                 ticket: 'NT$ 200-300/人',
-                notes: '提供裝備租借，適合全家活動'
+                notes: '提供裝備租借，適合全家活動',
+                detailedDescription: '<h4>設施介紹</h4><p>大魯閣集團2023-07-01進駐台北小巨蛋1F，450坪太空主題場地，可容300人。復刻70-80年代冰宮四輪滑輪文化，設DJ Show、互動光軌與新手練習區。</p><h4>活動特色</h4><p>450坪「迷幻太空」主題，容納300人，週末DJ Show。票價280元起，另租鞋護具100元。</p>'
             },
             '信義區購物': {
                 stayTime: '2-3小時',
                 bestTime: '下午2-8點',
                 transport: '捷運市政府站、信義安和站',
                 ticket: '免費',
-                notes: '台北最繁華商業區，有大型購物中心'
+                notes: '台北最繁華商業區，有大型購物中心',
+                detailedDescription: '<h4>都市規劃</h4><p>信義計畫區原四四兵工廠，1970年代副都心規劃，1980年起大規模都市設計導入人車分流。1980年副都心都市設計導入人車分流。</p><h4>商業特色</h4><p>台北最繁華商業區，有大型購物中心。</p>'
             },
             '台北101': {
                 stayTime: '2-3小時',
                 bestTime: '下午4-8點',
                 transport: '捷運台北101站',
                 ticket: '觀景台NT$ 600/人',
-                notes: '台灣地標建築，附近有購物中心'
+                notes: '台灣地標建築，附近有購物中心',
+                detailedDescription: '<h4>建築奇蹟</h4><p>信義計畫區原四四兵工廠，1970年代副都心規劃，1980年起大規模都市設計導入人車分流。2004年台北101高508m竣工，亞洲首棟100+層超高樓；2004年完工、高508m的台北101為全球首座500+m綠建築。</p><h4>結構特色</h4><p>結構含660t阻尼球、防17級颱風與7級地震；核心結構為660t風阻尼球(87-92F)可減震40%。觀景台：89F室內、91F戶外；101F秘境花園2020起開放。</p><h4>商業活動</h4><p>商圈百貨五大體系環繞市府廣場，10-11月周年慶為台灣零售最熱檔期。年跨年煙火長達300s為年度盛事。</p>'
             }
         };
 

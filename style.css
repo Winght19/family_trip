@@ -1405,6 +1405,40 @@ body {
   border-left: 4px solid var(--color-taiwan-orange);
 }
 
+.modal-detailed-description {
+  color: var(--color-text);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  background: linear-gradient(135deg, rgba(255, 140, 66, 0.1), rgba(255, 193, 7, 0.1));
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-taiwan-orange);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  text-align: justify;
+}
+
+.modal-detailed-description h4 {
+  color: var(--color-taiwan-orange);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.modal-detailed-description p {
+  margin-bottom: var(--space-3);
+  color: var(--color-text);
+}
+
+.modal-detailed-description ul {
+  margin-left: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.modal-detailed-description li {
+  margin-bottom: var(--space-2);
+  color: var(--color-text);
+}
+
 .modal-details {
   background: var(--color-secondary);
   border-radius: var(--radius-lg);
@@ -1493,6 +1527,8 @@ body {
   color: var(--color-text);
   border-left: 4px solid var(--color-taiwan-orange);
 }
+
+
 
 /* Responsive modal */
 @media (max-width: 768px) {
