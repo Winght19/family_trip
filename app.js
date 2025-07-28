@@ -12,6 +12,7 @@ class TravelItinerary {
         this.bindEvents();
         this.addTaiwanDecoration();
         this.addScrollEffects();
+        this.initModal(); // Initialize modal functionality
         this.showDay(0); // 預設顯示第一天
     }
 
@@ -324,6 +325,285 @@ class TravelItinerary {
                 card.classList.remove('search-highlight');
             }
         });
+    }
+
+    // Modal functionality
+    initModal() {
+        this.modal = document.getElementById('locationModal');
+        this.modalClose = document.getElementById('modalClose');
+        
+        // Close modal when clicking close button
+        this.modalClose.addEventListener('click', () => {
+            this.closeModal();
+        });
+
+        // Close modal when clicking overlay
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.closeModal();
+            }
+        });
+
+        // Add click handlers to all location cards
+        this.addLocationCardClickHandlers();
+        
+        // Add Google Maps button handlers
+        this.addGoogleMapsHandlers();
+    }
+
+    addLocationCardClickHandlers() {
+        document.querySelectorAll('.location-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                // Don't open modal if clicking on favorite button or map button
+                if (e.target.closest('.favorite-btn') || e.target.closest('.location-map-btn')) {
+                    return;
+                }
+                this.openModal(card);
+            });
+        });
+    }
+
+    addGoogleMapsHandlers() {
+        document.querySelectorAll('.location-map-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from opening
+                const location = btn.getAttribute('data-location');
+                this.openGoogleMaps(location);
+            });
+        });
+    }
+
+    openGoogleMaps(location) {
+        // Create Google Maps URL with the location
+        const encodedLocation = encodeURIComponent(location + ' 台灣');
+        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+        
+        // Open in new tab
+        window.open(googleMapsUrl, '_blank');
+        
+        // Show a toast notification
+        this.showToast(`正在開啟 ${location} 的 Google 地圖...`);
+    }
+
+    showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast map-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 2000);
+    }
+
+    openModal(card) {
+        const locationName = card.querySelector('.location-name').textContent;
+        const locationTime = card.querySelector('.location-time').textContent;
+        const locationDuration = card.querySelector('.location-duration').textContent;
+        const locationDescription = card.querySelector('.location-description').textContent;
+        const locationImage = card.querySelector('.location-image img').src;
+
+        // Populate modal content
+        document.getElementById('modalTitle').textContent = locationName;
+        document.getElementById('modalTime').textContent = locationTime;
+        document.getElementById('modalDuration').textContent = locationDuration;
+        document.getElementById('modalDescription').textContent = locationDescription;
+        document.getElementById('modalImage').src = locationImage;
+        document.getElementById('modalImage').alt = locationName;
+
+        // Get detailed information based on location
+        const details = this.getLocationDetails(locationName);
+        document.getElementById('modalStayTime').textContent = details.stayTime;
+        document.getElementById('modalBestTime').textContent = details.bestTime;
+        document.getElementById('modalTransport').textContent = details.transport;
+        document.getElementById('modalTicket').textContent = details.ticket;
+        document.getElementById('modalNotes').textContent = details.notes;
+
+        // Show modal
+        this.modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeModal() {
+        this.modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    getLocationDetails(locationName) {
+        // Detailed information for each location
+        const details = {
+            '桃園國際機場': {
+                stayTime: '30-60分鐘',
+                bestTime: '全天24小時',
+                transport: '機場捷運、計程車、機場巴士',
+                ticket: '免費',
+                notes: '建議提前2小時抵達機場辦理登機手續'
+            },
+            '桃園機場到台中高鐵': {
+                stayTime: '40分鐘',
+                bestTime: '全天',
+                transport: '高鐵',
+                ticket: '約NT$ 700-900',
+                notes: '建議提前購買車票，可使用悠遊卡'
+            },
+            '台中住宿': {
+                stayTime: '住宿一晚',
+                bestTime: '晚上',
+                transport: '計程車、公車',
+                ticket: 'NT$ 1,500-3,000/晚',
+                notes: '建議選擇市中心飯店，交通便利'
+            },
+            '審計新村368新創聚落': {
+                stayTime: '2-3小時',
+                bestTime: '下午2-6點',
+                transport: '公車、計程車',
+                ticket: '免費',
+                notes: '週末有暮暮市集，建議週末前往'
+            },
+            '高美濕地': {
+                stayTime: '2-3小時',
+                bestTime: '黃昏時分（5-7點）',
+                transport: '公車、計程車',
+                ticket: '免費',
+                notes: '注意潮汐時間，建議查詢日落時間'
+            },
+            '逢甲夜市': {
+                stayTime: '2-3小時',
+                bestTime: '晚上6-11點',
+                transport: '公車、計程車',
+                ticket: '免費',
+                notes: '人潮眾多，注意隨身物品'
+            },
+            '彩虹眷村': {
+                stayTime: '1-1.5小時',
+                bestTime: '上午9-11點或下午3-5點',
+                transport: '公車、計程車',
+                ticket: '免費',
+                notes: '拍照時注意不要觸摸彩繪牆面'
+            },
+            '宮原眼科': {
+                stayTime: '1-2小時',
+                bestTime: '上午10-12點或下午2-4點',
+                transport: '公車、計程車',
+                ticket: '免費參觀，冰淇淋需付費',
+                notes: '冰淇淋很受歡迎，可能需要排隊'
+            },
+            '前往台北': {
+                stayTime: '40分鐘',
+                bestTime: '全天',
+                transport: '高鐵',
+                ticket: '約NT$ 700-900',
+                notes: '建議提前購買車票'
+            },
+            '龍洞潛水': {
+                stayTime: '2-3小時',
+                bestTime: '上午9-11點',
+                transport: '包車、計程車',
+                ticket: 'NT$ 1,500-2,500/人',
+                notes: '需要預約，建議有潛水經驗'
+            },
+            '龍洞浮潛': {
+                stayTime: '2-3小時',
+                bestTime: '上午10-12點或下午2-4點',
+                transport: '包車、計程車',
+                ticket: 'NT$ 800-1,200/人',
+                notes: '適合初學者，提供裝備租借'
+            },
+            '九份老街': {
+                stayTime: '3-4小時',
+                bestTime: '下午3-7點',
+                transport: '公車、計程車',
+                ticket: '免費',
+                notes: '夜晚燈籠點亮時最美，建議傍晚前往'
+            },
+            '十分車站': {
+                stayTime: '2-3小時',
+                bestTime: '上午10-12點或下午2-4點',
+                transport: '平溪線火車',
+                ticket: '火車票NT$ 50-100，天燈NT$ 150-200',
+                notes: '放天燈時注意安全，遵守規定'
+            },
+            '關渡碼頭貨櫃市集': {
+                stayTime: '2-3小時',
+                bestTime: '下午3-7點',
+                transport: '捷運關渡站、公車',
+                ticket: '免費',
+                notes: '新開幕景點，河岸景色優美，適合看夕陽'
+            },
+            '饒河街觀光夜市': {
+                stayTime: '1.5-2小時',
+                bestTime: '晚上6-10點',
+                transport: '捷運松山站、公車',
+                ticket: '免費',
+                notes: '有多家米其林推薦美食，建議空腹前往'
+            },
+            '華山1914文創園區': {
+                stayTime: '2-3小時',
+                bestTime: '上午10-12點或下午2-5點',
+                transport: '捷運忠孝新生站、公車',
+                ticket: '免費參觀，展覽需付費',
+                notes: '經常舉辦展覽，建議查詢最新活動'
+            },
+            '西門町': {
+                stayTime: '2-3小時',
+                bestTime: '下午2-8點',
+                transport: '捷運西門站',
+                ticket: '免費',
+                notes: '年輕人聚集地，潮流時尚購物區'
+            },
+            '寧夏夜市': {
+                stayTime: '1.5-2小時',
+                bestTime: '晚上6-10點',
+                transport: '捷運雙連站、公車',
+                ticket: '免費',
+                notes: '曾獲選台北最好逛夜市，必吃蚵仔煎'
+            },
+            '小巨蛋Roller186溜輪場': {
+                stayTime: '2-3小時',
+                bestTime: '上午10-12點或下午2-5點',
+                transport: '捷運小巨蛋站',
+                ticket: 'NT$ 200-300/人',
+                notes: '提供裝備租借，適合全家活動'
+            },
+            '信義區購物': {
+                stayTime: '2-3小時',
+                bestTime: '下午2-8點',
+                transport: '捷運市政府站、信義安和站',
+                ticket: '免費',
+                notes: '台北最繁華商業區，有大型購物中心'
+            },
+            '台北101': {
+                stayTime: '2-3小時',
+                bestTime: '下午4-8點',
+                transport: '捷運台北101站',
+                ticket: '觀景台NT$ 600/人',
+                notes: '台灣地標建築，附近有購物中心'
+            }
+        };
+
+        return details[locationName] || {
+            stayTime: '1-2小時',
+            bestTime: '上午10-12點或下午2-5點',
+            transport: '公車、計程車',
+            ticket: '免費',
+            notes: '請查詢最新資訊'
+        };
     }
 }
 
